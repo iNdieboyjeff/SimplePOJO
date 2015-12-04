@@ -163,6 +163,27 @@ public class Tv {
         @Element(name = "previously-shown", required = false)
         Previously_shown Previously_shown;
 
+        @Element(name = "length", required = false)
+        Length Length;
+
+        @Element(name = "star-rating", required = false)
+        Star_rating Star_rating;
+
+        public Star_rating getStar_rating() {
+            return this.Star_rating;
+        }
+
+        public void setStar_rating(Star_rating value) {
+            this.Star_rating = value;
+        }
+
+        public Length getLength() {
+            return this.Length;
+        }
+
+        public void setLength(Length value) {
+            this.Length = value;
+        }
 
         public Subtitles getSubtitles() {
             return this.Subtitles;
@@ -431,27 +452,71 @@ public class Tv {
 
     }
 
+    public static class Length {
+
+        @Attribute(name = "units", required = false)
+        String Units;
+
+        @Text(required = false)
+        String TextValue;
+
+
+        public String getUnits() {
+            return this.Units;
+        }
+
+        public void setUnits(String value) {
+            this.Units = value;
+        }
+
+        public String getTextValue() {
+            return this.TextValue;
+        }
+
+        public void setTextValue(String value) {
+            this.TextValue = value;
+        }
+
+
+    }
+
+    public static class Star_rating {
+
+        @Element(name = "value", required = false)
+        String Value;
+
+
+        public String getValue() {
+            return this.Value;
+        }
+
+        public void setValue(String value) {
+            this.Value = value;
+        }
+
+
+    }
 
     public static class Credits {
 
-        @Element(name = "producer", required = false)
-        String Producer;
+        @ElementList(name = "producer", required = false, entry = "producer", inline = true)
+        List<String> Producer;
 
         @ElementList(name = "actor", required = false, entry = "actor", inline = true)
         List<String> Actor;
 
-        @Element(name = "director", required = false)
-        String Director;
+        @ElementList(name = "director", required = false, entry = "director", inline = true)
+        List<String> Director;
 
-        @Element(name = "presenter", required = false)
-        String Presenter;
+        @ElementList(name = "presenter", required = false, entry = "presenter", inline = true)
+        List<String> Presenter;
 
 
-        public String getProducer() {
+        public List<String> getProducer() {
             return this.Producer;
         }
 
-        public void setProducer(String value) {
+        public void setProducer(List<String> value) {
             this.Producer = value;
         }
 
@@ -463,19 +528,19 @@ public class Tv {
             this.Actor = value;
         }
 
-        public String getDirector() {
+        public List<String> getDirector() {
             return this.Director;
         }
 
-        public void setDirector(String value) {
+        public void setDirector(List<String> value) {
             this.Director = value;
         }
 
-        public String getPresenter() {
+        public List<String> getPresenter() {
             return this.Presenter;
         }
 
-        public void setPresenter(String value) {
+        public void setPresenter(List<String> value) {
             this.Presenter = value;
         }
 

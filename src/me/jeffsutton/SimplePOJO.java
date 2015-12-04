@@ -25,15 +25,15 @@ import org.simpleframework.xml.core.Persister;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
+import org.xml.sax.*;
+import util.android.util.FileUtils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.*;
@@ -54,12 +54,6 @@ public class SimplePOJO {
 
     public static void main(String[] argv) {
         String packageString = null;
-
-        for (String a : argv) {
-            if (a.startsWith("-p:")) {
-                packageString = a.substring(3);
-            }
-        }
 
         String sampleXML2 = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
                 "\n" +
@@ -244,76 +238,100 @@ public class SimplePOJO {
                 "  </programme>\n" +
                 "</tv>";
 
+        BufferedReader source = null;
+
+        for (String a : argv) {
+            if (a.startsWith("-p:")) {
+                packageString = a.substring(3);
+                System.out.println("Using package: " + packageString);
+            }
+
+            if (a.startsWith("-u:")) {
+                try {
+                    URL oracle = new URL(a.substring(3));
+                    System.out.println("Using URL: " + oracle.toExternalForm());
+                    BufferedReader in = new BufferedReader(
+                            new InputStreamReader(oracle.openStream(), StandardCharsets.UTF_8), 4096);
+                    source = in;
+                } catch (Exception err) {
+                    err.printStackTrace();
+                }
+            } else {
+                source = new BufferedReader(new StringReader(sampleXML2));
+            }
+        }
+
+        if (source == null) {
+            source = new BufferedReader(new StringReader(sampleXML2));
+        }
+
         try {
-            String r = new SimplePOJO(packageString).generate(sampleXML2);
+            SimplePOJO simplePOJO = new SimplePOJO(packageString);
+            String r = simplePOJO.generate(source);
             System.out.println(r);
+
+            writeToFile(r, simplePOJO.rootTageName);
+
         } catch (Exception eek) {
             eek.printStackTrace();
         }
 
         try {
             Serializer serializer = new Persister();
-            Tv html = serializer.read(Tv.class, sampleXML2);
+            Tv html = serializer.read(Tv.class, sampleXML2, false);
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            System.out.println("\n\n\n" + gson.toJson(html, Tv.class));
+//            System.out.println("\n\n\n" + gson.toJson(html, Tv.class));
         } catch (Exception err) {
             err.printStackTrace();
         }
     }
 
-    public String generate(String xml) throws ParserConfigurationException, SAXException, IOException {
+    private static void writeToFile(String data, String rootTageName) {
+        try {
+            PrintWriter out = new PrintWriter(mkClassName(rootTageName) + ".java");
+            out.println(data);
+            out.close();
+        } catch (Exception err) {
+            err.printStackTrace();
+        }
+    }
+
+    public String generate(BufferedReader xml) throws ParserConfigurationException, SAXException, IOException {
         Document document = parse(xml);
         rootTageName = stripNS(document.getFirstChild().getNodeName());
         visitClass(document.getFirstChild());
 
-//        ArrayList<String> toRemove = new ArrayList<>();
-//        for (Map.Entry<String, XClass> cls : classes.entrySet()) {
-//            XClass c = cls.getValue();
-//            String key = cls.getKey();
-//
-//            if (c.fields.size() <= 1 && (c.fields.size() == 0)) {
-//                toRemove.add(key);
-//            }
-//
-//        }
-//
-//        for (Map.Entry<String, XClass> cls : classes.entrySet()) {
-//
-//            for (Map.Entry<String, XField> f: cls.getValue().fields.entrySet()) {
-//                if (toRemove.contains(f.getValue().dataType)) {
-//                    f.getValue().dataType = "String";
-//                }
-//            }
-//
-//        }
-//
-//        for (String s: toRemove) {
-//            classes.remove(s);
-//        }
-//
-//
-//        for (Map.Entry<String, XClass> cls : classes.entrySet()) {
-//            boolean hasAttributes = false;
-//            int attributeCount = 0;
-//            for (Map.Entry<String, XField> f: cls.getValue().fields.entrySet()) {
-//                XField fd = f.getValue();
-//                if (fd.isAttribute) {
-//                    hasAttributes = true;
-//                    attributeCount++;
-//                }
-//            }
-//
-//        }
-
         return (generateClassText(classes.get(rootTageName)));
     }
 
-    public Document parse(String xml) throws IOException, SAXException, ParserConfigurationException {
+    public Document parse(BufferedReader xml) throws IOException, SAXException, ParserConfigurationException {
+        String file = new String();
+        try {
+            String str;
+            while ((str = xml.readLine()) != null) {
+                file += str;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        file = file.replaceAll("<!DOCTYPE((.|\n|\r)*?)\">", "");
+
+        // convert String into InputStream
+        InputStream is = new ByteArrayInputStream(file.getBytes());
+
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        dbf.setFeature("http://xml.org/sax/features/validation", false);
+        dbf.setNamespaceAware(false);
+        dbf.setIgnoringComments(true);
+        dbf.setValidating(false);
+
         DocumentBuilder db = dbf.newDocumentBuilder();
-        InputSource is = new InputSource(new StringReader(xml));
-        Document document = db.parse(is);
-        return document;
+
+        return db.parse(is);
     }
 
     public String stripNS(String str) {
@@ -325,14 +343,18 @@ public class SimplePOJO {
 
     public XClass visitClass(Node node) {
         String name = stripNS(node.getNodeName());
+        System.out.println("Visiting class:\t" + name);
         if (!classes.containsKey(name)) {
             XClass cla = new XClass();
             cla.name = name;
             classes.put(name, cla);
+            System.out.println("\tAdding class:\t" + name);
         }
 
         XClass cla = classes.get(name);
+        System.out.println("\t\tChecking class:\t" + name + "\t" + node.getNodeValue());
         if (node.getAttributes() != null) {
+            System.out.println("\t\t\tReading attributes from class " + name);
             for (int i = 0; i < node.getAttributes().getLength(); i++) {
                 String akey = node.getAttributes().item(i).getNodeName();
                 if (akey.contains("xmlns:") || akey.equals("xmlns")) {
@@ -345,6 +367,7 @@ public class SimplePOJO {
                     xf.name = akey;
                     xf.isInlineList = false;
                     xf.isAttribute = true;
+                    System.out.println("\t\t\tAdding attribute field: " + xf.name);
                     cla.fields.put(akey, xf);
                 }
                 XField xf = cla.fields.get(akey);
@@ -365,6 +388,7 @@ public class SimplePOJO {
 
         for (Map.Entry<String, List<Node>> entry : grouped.entrySet()) {
             String key = stripNS(entry.getKey());
+            System.out.println("\t\t\tLooking at child node: " + key);
             List<Node> nodes = entry.getValue();
             if (key.equals("#text") && node.getChildNodes().getLength() > 1) {
                 continue;
@@ -522,14 +546,14 @@ public class SimplePOJO {
         return name;
     }
 
-    public String mkClassName(String name) {
+    public static String mkClassName(String name) {
         name = getLastDotInList(name);
         name = name.replace("-", "_");
         name = name.replace("#", "");
         return name;
     }
 
-    public String getLastDotInList(String str) {
+    public static String getLastDotInList(String str) {
         if (str.indexOf('.') > -1) {
             String[] sr = str.split("/`./");
             str = "";
@@ -543,7 +567,7 @@ public class SimplePOJO {
         return str;
     }
 
-    public String cap(String str) {
+    public static String cap(String str) {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
@@ -552,13 +576,13 @@ public class SimplePOJO {
         try {
             DateType.getDate(nodeValue);
             return "Date";
-        } catch (Exception err) {
+        } catch (Exception ignored) {
 
         }
         try {
             new URL(nodeValue);
             return "URL";
-        } catch (Exception err) {
+        } catch (Exception ignored) {
 
         }
         if (nodeValue.equals("true") || nodeValue.equals("false")) {
@@ -568,6 +592,7 @@ public class SimplePOJO {
                 return "Double";
             } else {
                 try {
+                    //noinspection ResultOfMethodCallIgnored
                     Integer.parseInt(nodeValue);
                     return "Integer";
                 } catch (NumberFormatException err) {
@@ -609,9 +634,7 @@ public class SimplePOJO {
             isTextOnly = true;
         }
 
-        boolean isC = !isTextOnly;
-
-        return isC;
+        return !isTextOnly;
     }
 
     public static <String, XField> Collection<XField> values(final Map<String, XField> object) {
@@ -637,12 +660,12 @@ public class SimplePOJO {
 
     @SuppressWarnings("unchecked")
     protected static <K, E> Map<K, E> newLinkedHashMap() {
-        return new LinkedHashMap<K, E>();
+        return new LinkedHashMap<>();
     }
 
     @SuppressWarnings("unchecked")
     protected static <T> List<T> newArrayList() {
-        return new ArrayList<T>();
+        return new ArrayList<>();
     }
 
 

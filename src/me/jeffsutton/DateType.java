@@ -63,7 +63,7 @@ enum DateType {
      *
      * @param format this is the format to use to parse the date
      */
-    private DateType(String format) {
+    DateType(String format) {
         this.format = new DateFormat(format);
     }
 
