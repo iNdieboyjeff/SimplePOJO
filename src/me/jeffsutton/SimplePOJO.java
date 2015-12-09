@@ -18,15 +18,10 @@
 package me.jeffsutton;
 
 import com.github.underscore.Function1;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.simpleframework.xml.Serializer;
-import org.simpleframework.xml.core.Persister;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.*;
-import util.android.util.FileUtils;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -40,6 +35,8 @@ import java.util.*;
 
 
 /**
+ * <p>Class to parse XMl files and generate Java class models annotated for use with SimpleXML.</p>
+ *
  * Created by jeff on 03/12/2015.
  */
 public class SimplePOJO {
@@ -47,6 +44,7 @@ public class SimplePOJO {
     private final String packageName;
     HashMap<String, XClass> classes = new HashMap<>();
     private String rootTageName;
+    private int indentLevel = 0;
 
     public SimplePOJO(String packageName) {
         this.packageName = packageName;
@@ -54,189 +52,6 @@ public class SimplePOJO {
 
     public static void main(String[] argv) {
         String packageString = null;
-
-        String sampleXML2 = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
-                "\n" +
-                "\n" +
-                "<tv source-info-url=\"http://www.schedulesdirect.org/\" source-info-name=\"Schedules Direct\" generator-info-name=\"XMLTV/$Id: tv_grab_na_dd.in,v 1.70 2008/03/03 15:21:41 rmeden Exp $\" generator-info-url=\"http://www.xmltv.org/\">\n" +
-                "  <channel id=\"I10436.labs.zap2it.com\">\n" +
-                "    <display-name>13 KERA</display-name>\n" +
-                "    <display-name>13 KERA TX42822:-</display-name>\n" +
-                "    <display-name>13</display-name>\n" +
-                "    <display-name>13 KERA fcc</display-name>\n" +
-                "    <display-name>KERA</display-name>\n" +
-                "    <display-name>KERA</display-name>\n" +
-                "    <display-name>PBS Affiliate</display-name>\n" +
-                "    <icon src=\"file://C:\\Perl\\site/share/xmltv/icons/KERA.gif\" />\n" +
-                "  </channel>\n" +
-                "  <channel id=\"I10759.labs.zap2it.com\">\n" +
-                "    <display-name>11 KTVT</display-name>\n" +
-                "    <display-name>11 KTVT TX42822:-</display-name>\n" +
-                "    <display-name>11</display-name>\n" +
-                "    <display-name>11 KTVT fcc</display-name>\n" +
-                "    <display-name>KTVT</display-name>\n" +
-                "    <display-name>KTVT</display-name>\n" +
-                "    <display-name>CBS Affiliate</display-name>\n" +
-                "    <icon src=\"file://C:\\Perl\\site/share/xmltv/icons/KTVT.gif\" />\n" +
-                "  </channel>\n" +
-                "  <programme start=\"20080715003000 -0600\" stop=\"20080715010000 -0600\" channel=\"I10436.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">NOW on PBS</title>\n" +
-                "    <desc lang=\"en\">Jordan's Queen Rania has made job creation a priority to help curb the staggering unemployment rates among youths in the Middle East.</desc>\n" +
-                "    <date>20080711</date>\n" +
-                "    <category lang=\"en\">Newsmagazine</category>\n" +
-                "    <category lang=\"en\">Interview</category>\n" +
-                "    <category lang=\"en\">Public affairs</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">EP01006886.0028</episode-num>\n" +
-                "    <episode-num system=\"onscreen\">427</episode-num>\n" +
-                "    <audio>\n" +
-                "      <stereo>stereo</stereo>\n" +
-                "    </audio>\n" +
-                "    <previously-shown start=\"20080711000000\" />\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715010000 -0600\" stop=\"20080715023000 -0600\" channel=\"I10436.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">Mystery!</title>\n" +
-                "    <sub-title lang=\"en\">Foyle's War, Series IV: Bleak Midwinter</sub-title>\n" +
-                "    <desc lang=\"en\">Foyle investigates an explosion at a munitions factory, which he comes to believe may have been premeditated.</desc>\n" +
-                "    <date>20070701</date>\n" +
-                "    <category lang=\"en\">Anthology</category>\n" +
-                "    <category lang=\"en\">Mystery</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">EP00003026.0665</episode-num>\n" +
-                "    <episode-num system=\"onscreen\">2705</episode-num>\n" +
-                "    <audio>\n" +
-                "      <stereo>stereo</stereo>\n" +
-                "    </audio>\n" +
-                "    <previously-shown start=\"20070701000000\" />\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715023000 -0600\" stop=\"20080715040000 -0600\" channel=\"I10436.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">Mystery!</title>\n" +
-                "    <sub-title lang=\"en\">Foyle's War, Series IV: Casualties of War</sub-title>\n" +
-                "    <desc lang=\"en\">The murder of a prominent scientist may have been due to a gambling debt.</desc>\n" +
-                "    <date>20070708</date>\n" +
-                "    <category lang=\"en\">Anthology</category>\n" +
-                "    <category lang=\"en\">Mystery</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">EP00003026.0666</episode-num>\n" +
-                "    <episode-num system=\"onscreen\">2706</episode-num>\n" +
-                "    <audio>\n" +
-                "      <stereo>stereo</stereo>\n" +
-                "    </audio>\n" +
-                "    <previously-shown start=\"20070708000000\" />\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715040000 -0600\" stop=\"20080715043000 -0600\" channel=\"I10436.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">BBC World News</title>\n" +
-                "    <desc lang=\"en\">International issues.</desc>\n" +
-                "    <category lang=\"en\">News</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">SH00315789.0000</episode-num>\n" +
-                "    <previously-shown />\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715043000 -0600\" stop=\"20080715050000 -0600\" channel=\"I10436.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">Sit and Be Fit</title>\n" +
-                "    <date>20070924</date>\n" +
-                "    <category lang=\"en\">Exercise</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">EP00003847.0074</episode-num>\n" +
-                "    <episode-num system=\"onscreen\">901</episode-num>\n" +
-                "    <audio>\n" +
-                "      <stereo>stereo</stereo>\n" +
-                "    </audio>\n" +
-                "    <previously-shown start=\"20070924000000\" />\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715060000 -0600\" stop=\"20080715080000 -0600\" channel=\"I10759.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">The Early Show</title>\n" +
-                "    <desc lang=\"en\">Republican candidate John McCain; premiere of the film \"The Dark Knight.\"</desc>\n" +
-                "    <date>20080715</date>\n" +
-                "    <category lang=\"en\">Talk</category>\n" +
-                "    <category lang=\"en\">News</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">EP00337003.2361</episode-num>\n" +
-                "    <audio>\n" +
-                "      <stereo>stereo</stereo>\n" +
-                "    </audio>\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715080000 -0600\" stop=\"20080715090000 -0600\" channel=\"I10759.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">Rachael Ray</title>\n" +
-                "    <desc lang=\"en\">Actresses Kim Raver, Brooke Shields and Lindsay Price (\"Lipstick Jungle\"); women in their 40s tell why they got breast implants; a 30-minute meal.</desc>\n" +
-                "    <credits>\n" +
-                "      <presenter>Rachael Ray</presenter>\n" +
-                "    </credits>\n" +
-                "    <date>20080306</date>\n" +
-                "    <category lang=\"en\">Talk</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">EP00847333.0303</episode-num>\n" +
-                "    <episode-num system=\"onscreen\">2119</episode-num>\n" +
-                "    <audio>\n" +
-                "      <stereo>stereo</stereo>\n" +
-                "    </audio>\n" +
-                "    <previously-shown start=\"20080306000000\" />\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715090000 -0600\" stop=\"20080715100000 -0600\" channel=\"I10759.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">The Price Is Right</title>\n" +
-                "    <desc lang=\"en\">Contestants bid for prizes then compete for fabulous showcases.</desc>\n" +
-                "    <credits>\n" +
-                "      <director>Bart Eskander</director>\n" +
-                "      <producer>Roger Dobkowitz</producer>\n" +
-                "      <presenter>Drew Carey</presenter>\n" +
-                "    </credits>\n" +
-                "    <category lang=\"en\">Game show</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">SH00004372.0000</episode-num>\n" +
-                "    <audio>\n" +
-                "      <stereo>stereo</stereo>\n" +
-                "    </audio>\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "    <rating system=\"VCHIP\">\n" +
-                "      <value>TV-G</value>\n" +
-                "    </rating>\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715100000 -0600\" stop=\"20080715103000 -0600\" channel=\"I10759.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">Jeopardy!</title>\n" +
-                "    <credits>\n" +
-                "      <presenter>Alex Trebek</presenter>\n" +
-                "    </credits>\n" +
-                "    <date>20080715</date>\n" +
-                "    <category lang=\"en\">Game show</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">EP00002348.1700</episode-num>\n" +
-                "    <episode-num system=\"onscreen\">5507</episode-num>\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "    <rating system=\"VCHIP\">\n" +
-                "      <value>TV-G</value>\n" +
-                "    </rating>\n" +
-                "  </programme>\n" +
-                "  <programme start=\"20080715103000 -0600\" stop=\"20080715113000 -0600\" channel=\"I10759.labs.zap2it.com\">\n" +
-                "    <title lang=\"en\">The Young and the Restless</title>\n" +
-                "    <sub-title lang=\"en\">Sabrina Offers Victoria a Truce</sub-title>\n" +
-                "    <desc lang=\"en\">Jeff thinks Kyon stole the face cream; Nikki asks Nick to give David a chance; Amber begs Adrian to go to Australia.</desc>\n" +
-                "    <credits>\n" +
-                "      <actor>Peter Bergman</actor>\n" +
-                "      <actor>Eric Braeden</actor>\n" +
-                "      <actor>Jeanne Cooper</actor>\n" +
-                "      <actor>Melody Thomas Scott</actor>\n" +
-                "    </credits>\n" +
-                "    <date>20080715</date>\n" +
-                "    <category lang=\"en\">Soap</category>\n" +
-                "    <category lang=\"en\">Series</category>\n" +
-                "    <episode-num system=\"dd_progid\">EP00004422.1359</episode-num>\n" +
-                "    <episode-num system=\"onscreen\">8937</episode-num>\n" +
-                "    <audio>\n" +
-                "      <stereo>stereo</stereo>\n" +
-                "    </audio>\n" +
-                "    <subtitles type=\"teletext\" />\n" +
-                "    <rating system=\"VCHIP\">\n" +
-                "      <value>TV-14</value>\n" +
-                "    </rating>\n" +
-                "  </programme>\n" +
-                "</tv>";
 
         BufferedReader source = null;
 
@@ -250,20 +65,21 @@ public class SimplePOJO {
                 try {
                     URL oracle = new URL(a.substring(3));
                     System.out.println("Using URL: " + oracle.toExternalForm());
-                    BufferedReader in = new BufferedReader(
+                    source = new BufferedReader(
                             new InputStreamReader(oracle.openStream(), StandardCharsets.UTF_8), 4096);
-                    source = in;
                 } catch (Exception err) {
                     err.printStackTrace();
                 }
             } else {
-                source = new BufferedReader(new StringReader(sampleXML2));
+                source = new BufferedReader(new StringReader(""));
             }
         }
 
         if (source == null) {
-            source = new BufferedReader(new StringReader(sampleXML2));
+            source = new BufferedReader(new StringReader(""));
         }
+
+        System.out.println("\n\n");
 
         try {
             SimplePOJO simplePOJO = new SimplePOJO(packageString);
@@ -276,14 +92,14 @@ public class SimplePOJO {
             eek.printStackTrace();
         }
 
-        try {
-            Serializer serializer = new Persister();
-            Tv html = serializer.read(Tv.class, sampleXML2, false);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-//            System.out.println("\n\n\n" + gson.toJson(html, Tv.class));
-        } catch (Exception err) {
-            err.printStackTrace();
-        }
+//        try {
+//            Serializer serializer = new Persister();
+//            Tv html = serializer.read(Tv.class, "", false);
+//            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+////            System.out.println("\n\n\n" + gson.toJson(html, Tv.class));
+//        } catch (Exception err) {
+//            err.printStackTrace();
+//        }
     }
 
     private static void writeToFile(String data, String rootTageName) {
@@ -305,7 +121,7 @@ public class SimplePOJO {
     }
 
     public Document parse(BufferedReader xml) throws IOException, SAXException, ParserConfigurationException {
-        String file = new String();
+        String file = "";
         try {
             String str;
             while ((str = xml.readLine()) != null) {
@@ -343,18 +159,18 @@ public class SimplePOJO {
 
     public XClass visitClass(Node node) {
         String name = stripNS(node.getNodeName());
-        System.out.println("Visiting class:\t" + name);
+//        System.out.println("Visiting class:\t" + name);
         if (!classes.containsKey(name)) {
             XClass cla = new XClass();
             cla.name = name;
             classes.put(name, cla);
-            System.out.println("\tAdding class:\t" + name);
+//            System.out.println("\tAdding class:\t" + name);
         }
 
         XClass cla = classes.get(name);
-        System.out.println("\t\tChecking class:\t" + name + "\t" + node.getNodeValue());
+//        System.out.println("\t\tChecking class:\t" + name + "\t" + node.getNodeValue());
         if (node.getAttributes() != null) {
-            System.out.println("\t\t\tReading attributes from class " + name);
+//            System.out.println("\t\t\tReading attributes from class " + name);
             for (int i = 0; i < node.getAttributes().getLength(); i++) {
                 String akey = node.getAttributes().item(i).getNodeName();
                 if (akey.contains("xmlns:") || akey.equals("xmlns")) {
@@ -367,7 +183,7 @@ public class SimplePOJO {
                     xf.name = akey;
                     xf.isInlineList = false;
                     xf.isAttribute = true;
-                    System.out.println("\t\t\tAdding attribute field: " + xf.name);
+//                    System.out.println("\t\t\tAdding attribute field: " + xf.name);
                     cla.fields.put(akey, xf);
                 }
                 XField xf = cla.fields.get(akey);
@@ -388,7 +204,7 @@ public class SimplePOJO {
 
         for (Map.Entry<String, List<Node>> entry : grouped.entrySet()) {
             String key = stripNS(entry.getKey());
-            System.out.println("\t\t\tLooking at child node: " + key);
+//            System.out.println("\t\t\tLooking at child node: " + key);
             List<Node> nodes = entry.getValue();
             if (key.equals("#text") && node.getChildNodes().getLength() > 1) {
                 continue;
@@ -453,12 +269,14 @@ public class SimplePOJO {
     }
 
     public String generateClassText(XClass cls) {
+        if ((cls.fields == null || cls.fields.size() < 1)) {
+            return "";
+        }
         String headers = "", root = "", isStatic = "", fields = "", accessors = "", inners = "";
-
         if (cls.name.equals(rootTageName)) {
 
             if (packageName != null) {
-                headers = "package " + packageName + ";\n\n";
+                headers = "package " + packageName + ";\n";
             }
 
             headers += "\nimport org.simpleframework.xml.Attribute;\n" +
@@ -467,31 +285,38 @@ public class SimplePOJO {
                     "import org.simpleframework.xml.ElementList;\n" +
                     "import org.simpleframework.xml.Root;\n\n" +
                     "import java.net.URL;\n" +
-                    "import java.util.List;\n\n";
+                    "import java.util.List;\n";
 
-            root = "@Root(name=\"" + cls.name + "\")\n";
+            root = "\n@Root(name=\"" + cls.name + "\")\n";
 
             for (Map.Entry<String, XClass> cl : classes.entrySet()) {
-                if (cl.getValue().name.equals(rootTageName)) {
-
-                } else {
-                    inners += "\n\n" + generateClassText(cl.getValue());
+                if (!cl.getValue().name.equals(rootTageName)) {
+                    inners += generateClassText(cl.getValue()) + "\n";
                 }
             }
         } else {
+            indentLevel++;
+            root = "\n";
             isStatic = "static ";
         }
 
         fields = generateFieldText(cls.fields);
         accessors = generateAccessors(cls.fields);
 
-        return headers + root + "\n\npublic " + isStatic + "class " + mkClassName(cls.name) + " {\n\n" +
-                fields + "\n\n" + accessors + inners + "\n}";
+        String indentText = "";
+
+        for (int i = 0; i < indentLevel; i++) {
+            indentText += "    ";
+        }
+
+        indentLevel--;
+        return headers + root + indentText + "public " + isStatic + "class " + mkClassName(cls.name) + " {\n" +
+                fields + "" + accessors + inners + "\n" + indentText + "}";
     }
 
     public String generateFieldText(HashMap<String, XField> fields) {
         String str = "";
-
+        indentLevel++;
         for (Map.Entry<String, XField> field : fields.entrySet()) {
             XField f = field.getValue();
 
@@ -517,13 +342,29 @@ public class SimplePOJO {
                 annotation = "@Text(required=false)";
             }
 
-            str += annotation + "\n" + dataType + " " + mkFieldName(f.name) + ";\n\n";
+            String indentText = "";
+
+            for (int i = 0; i < indentLevel; i++) {
+                indentText += "    ";
+            }
+
+
+            str += "\n" + indentText + annotation + "\n" + indentText + dataType + " " + mkFieldName(f.name) + ";\n";
         }
+        indentLevel--;
         return str;
     }
 
     public String generateAccessors(HashMap<String, XField> fields) {
         String str = "";
+        indentLevel++;
+
+        String indentText = "";
+
+        for (int i = 0; i < indentLevel; i++) {
+            indentText += "    ";
+        }
+
 
         for (Map.Entry<String, XField> field : fields.entrySet()) {
             XField f = field.getValue();
@@ -533,9 +374,10 @@ public class SimplePOJO {
                 dataType = "List<" + dataType + ">";
             }
 
-            str += "public " + dataType + " get" + mkFieldName(cap(f.name)) + "() {return this." + mkFieldName(f.name) + ";}\n";
-            str += "public void set" + mkFieldName(cap(f.name)) + "(" + dataType + " value) {this." + mkFieldName(f.name) + " = value;}\n\n";
+            str += "\n" + indentText + "public " + dataType + " get" + cap(mkFieldName(cap(f.name))) + "() {return this." + mkFieldName(f.name) + ";}\n";
+            str += indentText + "public void set" + cap(mkFieldName(cap(f.name))) + "(" + dataType + " value) {this." + mkFieldName(f.name) + " = value;}\n";
         }
+        indentLevel--;
         return str;
     }
 
@@ -543,6 +385,14 @@ public class SimplePOJO {
         name = getLastDotInList(name);
         name = name.replace("-", "_");
         name = name.replace("#", "");
+        name = name.substring(0, 1).toLowerCase() + name.substring(1);
+        if (name.endsWith("_")) {
+            name = name.substring(0, name.length() - 1);
+        }
+        while (name.contains("_")) {
+            int pos = name.indexOf("_");
+            name = name.substring(0, pos) + name.substring(pos + 1, pos + 2).toUpperCase() + name.substring(pos + 2);
+        }
         return name;
     }
 
@@ -550,6 +400,13 @@ public class SimplePOJO {
         name = getLastDotInList(name);
         name = name.replace("-", "_");
         name = name.replace("#", "");
+        if (name.endsWith("_")) {
+            name = name.substring(0, name.length() - 1);
+        }
+        while (name.contains("_")) {
+            int pos = name.indexOf("_");
+            name = name.substring(0, pos) + name.substring(pos + 1, pos + 2).toUpperCase() + name.substring(pos + 2);
+        }
         return name;
     }
 
