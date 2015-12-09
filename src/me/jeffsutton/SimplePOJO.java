@@ -18,6 +18,10 @@
 package me.jeffsutton;
 
 import com.github.underscore.Function1;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.simpleframework.xml.Serializer;
+import org.simpleframework.xml.core.Persister;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -94,9 +98,23 @@ public class SimplePOJO {
 
 //        try {
 //            Serializer serializer = new Persister();
-//            Tv html = serializer.read(Tv.class, "", false);
-//            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-////            System.out.println("\n\n\n" + gson.toJson(html, Tv.class));
+//            for (String a : argv) {
+//                if (a.startsWith("-u:")) {
+//                    try {
+//                        URL oracle = new URL(a.substring(3));
+//                        System.out.println("Using URL: " + oracle.toExternalForm());
+//                        source = new BufferedReader(
+//                                new InputStreamReader(oracle.openStream(), StandardCharsets.UTF_8), 4096);
+//                    } catch (Exception err) {
+//                        err.printStackTrace();
+//                    }
+//                } else {
+//                    source = new BufferedReader(new StringReader(""));
+//                }
+//            }
+//            Tv html = serializer.read(Tv.class, source, false);
+//            Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
+//            System.out.println("\n\n\n" + gson.toJson(html, Tv.class));
 //        } catch (Exception err) {
 //            err.printStackTrace();
 //        }
@@ -117,6 +135,27 @@ public class SimplePOJO {
         rootTageName = stripNS(document.getFirstChild().getNodeName());
         visitClass(document.getFirstChild());
 
+        List<String> toRemove = new ArrayList<>();
+        for (XClass xClass : classes.values()) {
+            if (xClass.fields == null || xClass.fields.size() < 1) {
+                toRemove.add(xClass.name);
+            }
+        }
+
+        for (XClass xClass : classes.values()) {
+            for (XField field : xClass.fields.values()) {
+                if (toRemove.contains(field.dataType)) {
+                    field.dataType = "String";
+                }
+            }
+        }
+
+        for (String s : toRemove) {
+            classes.remove(s);
+        }
+
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        System.out.println(gson.toJson(classes));
         return (generateClassText(classes.get(rootTageName)));
     }
 
@@ -159,37 +198,44 @@ public class SimplePOJO {
 
     public XClass visitClass(Node node) {
         String name = stripNS(node.getNodeName());
-//        System.out.println("Visiting class:\t" + name);
+        System.out.println("Visiting class:\t" + name);
         if (!classes.containsKey(name)) {
             XClass cla = new XClass();
             cla.name = name;
             classes.put(name, cla);
-//            System.out.println("\tAdding class:\t" + name);
+            System.out.println("\tAdding class:\t" + name);
         }
 
         XClass cla = classes.get(name);
-//        System.out.println("\t\tChecking class:\t" + name + "\t" + node.getNodeValue());
-        if (node.getAttributes() != null) {
-//            System.out.println("\t\t\tReading attributes from class " + name);
+        System.out.println("\t\tChecking class:\t" + name + " :: " + node.getTextContent());
+        if (node.getAttributes() != null && node.getAttributes().getLength() > 0) {
+            System.out.println("\t\t\tReading attributes from class " + name);
             for (int i = 0; i < node.getAttributes().getLength(); i++) {
-                String akey = node.getAttributes().item(i).getNodeName();
-                if (akey.contains("xmlns:") || akey.equals("xmlns")) {
-                    continue;
-                }
-                akey = stripNS(akey);
+                System.out.println("Gerring attribute #" + i);
+                try {
+                    String akey = node.getAttributes().item(i).getNodeName();
+                    if (akey.contains("xmlns:") || akey.equals("xmlns")) {
+                        continue;
+                    }
+                    akey = stripNS(akey);
 
-                if (!cla.fields.containsKey(akey)) {
-                    XField xf = new XField();
-                    xf.name = akey;
-                    xf.isInlineList = false;
-                    xf.isAttribute = true;
-//                    System.out.println("\t\t\tAdding attribute field: " + xf.name);
+                    if (!cla.fields.containsKey(akey)) {
+                        XField xf = new XField();
+                        xf.name = akey;
+                        xf.isInlineList = false;
+                        xf.isAttribute = true;
+                        System.out.println("\t\t\tAdding attribute field: " + xf.name + " to " + cla.name.toString());
+                        cla.fields.put(akey, xf);
+                    }
+                    XField xf = cla.fields.get(akey);
+                    xf.dataType = getLiteralDataType(node.getAttributes().item(i).getNodeValue());
                     cla.fields.put(akey, xf);
+                } catch (Exception err) {
+                    err.printStackTrace();
                 }
-                XField xf = cla.fields.get(akey);
-                xf.dataType = getLiteralDataType(node.getAttributes().item(i).getNodeValue());
-                cla.fields.put(akey, xf);
             }
+        } else {
+            System.out.println("Has no attributes");
         }
 
 
@@ -204,9 +250,10 @@ public class SimplePOJO {
 
         for (Map.Entry<String, List<Node>> entry : grouped.entrySet()) {
             String key = stripNS(entry.getKey());
-//            System.out.println("\t\t\tLooking at child node: " + key);
+
+            System.out.println("\t\t\tLooking at child node: " + key + " of class " + name + ", children: " + entry.getValue().size());
             List<Node> nodes = entry.getValue();
-            if (key.equals("#text") && node.getChildNodes().getLength() > 1) {
+            if (key.equals("#text") && entry.getValue().size() > 1) {
                 continue;
             }
             {
@@ -215,6 +262,7 @@ public class SimplePOJO {
                     XField field = new XField();
                     field.name = key;
                     cla.fields.put(key, field);
+                    System.out.println("Adding field " + cla.name + " -- " + key);
                 }
 
                 XField field = cla.fields.get(key);
@@ -235,29 +283,37 @@ public class SimplePOJO {
                                 field.isList = true;
                             }
                         }
-                        if (node1.getAttributes() != null) {
+                        if (node1.getAttributes() != null && node1.getAttributes().getLength() > 0) {
                             for (int i = 0; i < node1.getAttributes().getLength(); i++) {
-                                String akey = node.getAttributes().item(i).getNodeName();
-                                if (akey.contains("xmlns:") || akey.equals("xmlns")) {
-                                    continue;
-                                }
-                                akey = stripNS(akey);
+                                System.out.println("Getting attribute #" + i + " of " + node1.getAttributes().getLength());
+                                try {
+                                    Node n = node.getAttributes().item(i);
+                                    if (n == null) continue;
+                                    String akey = n.getNodeName();
+                                    if (akey.contains("xmlns:") || akey.equals("xmlns")) {
+                                        continue;
+                                    }
+                                    akey = stripNS(akey);
 
-                                if (!cla.fields.containsKey(akey)) {
-                                    XField xf = new XField();
-                                    xf.name = akey;
-                                    xf.isInlineList = false;
-                                    xf.isAttribute = true;
+                                    if (!cla.fields.containsKey(akey)) {
+                                        XField xf = new XField();
+                                        xf.name = akey;
+                                        xf.isInlineList = false;
+                                        xf.isAttribute = true;
+                                        cla.fields.put(akey, xf);
+                                        System.out.println("\t\t\tAdding attribute field: " + xf.name + " to " + cla.name.toString());
+                                    }
+                                    XField xf = cla.fields.get(akey);
+                                    xf.dataType = getLiteralDataType(node1.getAttributes().item(i).getNodeValue());
                                     cla.fields.put(akey, xf);
+                                } catch (Exception err) {
+                                    err.printStackTrace();
                                 }
-                                XField xf = cla.fields.get(akey);
-                                xf.dataType = getLiteralDataType(node.getAttributes().item(i).getNodeValue());
-                                cla.fields.put(akey, xf);
                             }
                         }
 
                     } else {
-                        field.dataType = getLiteralDataType(node.getNodeValue());
+                        field.dataType = getLiteralDataType(node1.getNodeValue());
                     }
                 }
 
@@ -265,13 +321,16 @@ public class SimplePOJO {
                 cla.fields.put(key, field);
             }
         }
+
+        if (cla.fields == null || cla.fields.size() < 1) {
+            System.out.println("Class " + cla.name + " has no fields");
+        }
+
         return cla;
     }
 
     public String generateClassText(XClass cls) {
-        if ((cls.fields == null || cls.fields.size() < 1)) {
-            return "";
-        }
+
         String headers = "", root = "", isStatic = "", fields = "", accessors = "", inners = "";
         if (cls.name.equals(rootTageName)) {
 

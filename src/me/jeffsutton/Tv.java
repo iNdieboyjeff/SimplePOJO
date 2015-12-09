@@ -1,23 +1,4 @@
-
-/*
- * Copyright (c) 2015 Jeff Sutton.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package me.jeffsutton;
-
 
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
@@ -29,637 +10,431 @@ import java.net.URL;
 import java.util.List;
 
 @Root(name = "tv")
-
-
 public class Tv {
 
     @ElementList(name = "programme", required = false, entry = "programme", inline = true)
-    List<Programme> Programme;
+    List<Programme> programme;
 
     @Attribute(name = "generator-info-name", required = false)
-    String Generator_info_name;
-
-    @Attribute(name = "source-info-url", required = false)
-    URL Source_info_url;
+    String generatorInfoName;
 
     @Attribute(name = "generator-info-url", required = false)
-    URL Generator_info_url;
+    String generatorInfoUrl;
 
     @ElementList(name = "channel", required = false, entry = "channel", inline = true)
-    List<Channel> Channel;
+    List<Channel> channel;
 
     @Attribute(name = "source-info-name", required = false)
-    String Source_info_name;
-
+    String sourceInfoName;
 
     public List<Programme> getProgramme() {
-        return this.Programme;
+        return this.programme;
     }
 
     public void setProgramme(List<Programme> value) {
-        this.Programme = value;
+        this.programme = value;
     }
 
-    public String getGenerator_info_name() {
-        return this.Generator_info_name;
+    public String getGeneratorInfoName() {
+        return this.generatorInfoName;
     }
 
-    public void setGenerator_info_name(String value) {
-        this.Generator_info_name = value;
+    public void setGeneratorInfoName(String value) {
+        this.generatorInfoName = value;
     }
 
-    public URL getSource_info_url() {
-        return this.Source_info_url;
+    public String getGeneratorInfoUrl() {
+        return this.generatorInfoUrl;
     }
 
-    public void setSource_info_url(URL value) {
-        this.Source_info_url = value;
-    }
-
-    public URL getGenerator_info_url() {
-        return this.Generator_info_url;
-    }
-
-    public void setGenerator_info_url(URL value) {
-        this.Generator_info_url = value;
+    public void setGeneratorInfoUrl(String value) {
+        this.generatorInfoUrl = value;
     }
 
     public List<Channel> getChannel() {
-        return this.Channel;
+        return this.channel;
     }
 
     public void setChannel(List<Channel> value) {
-        this.Channel = value;
+        this.channel = value;
     }
 
-    public String getSource_info_name() {
-        return this.Source_info_name;
+    public String getSourceInfoName() {
+        return this.sourceInfoName;
     }
 
-    public void setSource_info_name(String value) {
-        this.Source_info_name = value;
+    public void setSourceInfoName(String value) {
+        this.sourceInfoName = value;
     }
-
-
-    public static class Subtitles {
-
-        @Attribute(name = "type", required = false)
-        String Type;
-
-
-        public String getType() {
-            return this.Type;
-        }
-
-        public void setType(String value) {
-            this.Type = value;
-        }
-
-
-    }
-
 
     public static class Programme {
 
-        @Element(name = "subtitles", required = false)
-        Subtitles Subtitles;
-
         @Attribute(name = "stop", required = false)
-        String Stop;
+        String stop;
 
         @ElementList(name = "category", required = false, entry = "category", inline = true)
-        List<Category> Category;
+        List<Category> category;
 
         @Element(name = "title", required = false)
-        Title Title;
+        Title title;
 
         @Element(name = "desc", required = false)
-        Desc Desc;
-
-        @Element(name = "audio", required = false)
-        Audio Audio;
-
-        @Attribute(name = "start", required = false)
-        String Start;
-
-        @ElementList(name = "episode-num", required = false, entry = "episode-num", inline = true)
-        List<Episode_num> Episode_num;
-
-        @Element(name = "credits", required = false)
-        Credits Credits;
-
-        @Element(name = "rating", required = false)
-        Rating Rating;
-
-        @Element(name = "sub-title", required = false)
-        Sub_title Sub_title;
-
-        @Element(name = "date", required = false)
-        String Date;
-
-        @Attribute(name = "channel", required = false)
-        String Channel;
-
-        @Element(name = "previously-shown", required = false)
-        Previously_shown Previously_shown;
-
-        @Element(name = "length", required = false)
-        Length Length;
+        Desc desc;
 
         @Element(name = "star-rating", required = false)
-        Star_rating Star_rating;
+        StarRating starRating;
 
-        public Star_rating getStar_rating() {
-            return this.Star_rating;
-        }
+        @Attribute(name = "start", required = false)
+        String start;
 
-        public void setStar_rating(Star_rating value) {
-            this.Star_rating = value;
-        }
+        @ElementList(name = "episode-num", required = false, entry = "episode-num", inline = true)
+        List<EpisodeNum> episodeNum;
 
-        public Length getLength() {
-            return this.Length;
-        }
+        @Element(name = "length", required = false)
+        Length length;
 
-        public void setLength(Length value) {
-            this.Length = value;
-        }
+        @Element(name = "credits", required = false)
+        Credits credits;
 
-        public Subtitles getSubtitles() {
-            return this.Subtitles;
-        }
+        @Element(name = "sub-title", required = false)
+        SubTitle subTitle;
 
-        public void setSubtitles(Subtitles value) {
-            this.Subtitles = value;
-        }
+        @Element(name = "date", required = false)
+        String date;
+
+        @Attribute(name = "channel", required = false)
+        String channel;
 
         public String getStop() {
-            return this.Stop;
+            return this.stop;
         }
 
         public void setStop(String value) {
-            this.Stop = value;
+            this.stop = value;
         }
 
         public List<Category> getCategory() {
-            return this.Category;
+            return this.category;
         }
 
         public void setCategory(List<Category> value) {
-            this.Category = value;
+            this.category = value;
         }
 
         public Title getTitle() {
-            return this.Title;
+            return this.title;
         }
 
         public void setTitle(Title value) {
-            this.Title = value;
+            this.title = value;
         }
 
         public Desc getDesc() {
-            return this.Desc;
+            return this.desc;
         }
 
         public void setDesc(Desc value) {
-            this.Desc = value;
+            this.desc = value;
         }
 
-        public Audio getAudio() {
-            return this.Audio;
+        public StarRating getStarRating() {
+            return this.starRating;
         }
 
-        public void setAudio(Audio value) {
-            this.Audio = value;
+        public void setStarRating(StarRating value) {
+            this.starRating = value;
         }
 
         public String getStart() {
-            return this.Start;
+            return this.start;
         }
 
         public void setStart(String value) {
-            this.Start = value;
+            this.start = value;
         }
 
-        public List<Episode_num> getEpisode_num() {
-            return this.Episode_num;
+        public List<EpisodeNum> getEpisodeNum() {
+            return this.episodeNum;
         }
 
-        public void setEpisode_num(List<Episode_num> value) {
-            this.Episode_num = value;
+        public void setEpisodeNum(List<EpisodeNum> value) {
+            this.episodeNum = value;
+        }
+
+        public Length getLength() {
+            return this.length;
+        }
+
+        public void setLength(Length value) {
+            this.length = value;
         }
 
         public Credits getCredits() {
-            return this.Credits;
+            return this.credits;
         }
 
         public void setCredits(Credits value) {
-            this.Credits = value;
+            this.credits = value;
         }
 
-        public Rating getRating() {
-            return this.Rating;
+        public SubTitle getSubTitle() {
+            return this.subTitle;
         }
 
-        public void setRating(Rating value) {
-            this.Rating = value;
-        }
-
-        public Sub_title getSub_title() {
-            return this.Sub_title;
-        }
-
-        public void setSub_title(Sub_title value) {
-            this.Sub_title = value;
+        public void setSubTitle(SubTitle value) {
+            this.subTitle = value;
         }
 
         public String getDate() {
-            return this.Date;
+            return this.date;
         }
 
         public void setDate(String value) {
-            this.Date = value;
+            this.date = value;
         }
 
         public String getChannel() {
-            return this.Channel;
+            return this.channel;
         }
 
         public void setChannel(String value) {
-            this.Channel = value;
+            this.channel = value;
         }
-
-        public Previously_shown getPreviously_shown() {
-            return this.Previously_shown;
-        }
-
-        public void setPreviously_shown(Previously_shown value) {
-            this.Previously_shown = value;
-        }
-
 
     }
-
-
-    public static class Icon {
-
-        @Attribute(name = "src", required = false)
-        String Src;
-
-
-        public String getSrc() {
-            return this.Src;
-        }
-
-        public void setSrc(String value) {
-            this.Src = value;
-        }
-
-
-    }
-
 
     public static class Category {
 
         @Text(required = false)
-        String TextValue;
+        String textValue;
 
         @Attribute(name = "lang", required = false)
-        String Lang;
-
+        String lang;
 
         public String getTextValue() {
-            return this.TextValue;
+            return this.textValue;
         }
 
         public void setTextValue(String value) {
-            this.TextValue = value;
+            this.textValue = value;
         }
 
         public String getLang() {
-            return this.Lang;
+            return this.lang;
         }
 
         public void setLang(String value) {
-            this.Lang = value;
+            this.lang = value;
         }
 
-
     }
-
 
     public static class Title {
 
         @Text(required = false)
-        String TextValue;
+        String textValue;
 
         @Attribute(name = "lang", required = false)
-        String Lang;
-
+        String lang;
 
         public String getTextValue() {
-            return this.TextValue;
+            return this.textValue;
         }
 
         public void setTextValue(String value) {
-            this.TextValue = value;
+            this.textValue = value;
         }
 
         public String getLang() {
-            return this.Lang;
+            return this.lang;
         }
 
         public void setLang(String value) {
-            this.Lang = value;
+            this.lang = value;
         }
 
-
     }
-
 
     public static class Desc {
 
         @Text(required = false)
-        String TextValue;
+        String textValue;
 
         @Attribute(name = "lang", required = false)
-        String Lang;
-
+        String lang;
 
         public String getTextValue() {
-            return this.TextValue;
+            return this.textValue;
         }
 
         public void setTextValue(String value) {
-            this.TextValue = value;
+            this.textValue = value;
         }
 
         public String getLang() {
-            return this.Lang;
+            return this.lang;
         }
 
         public void setLang(String value) {
-            this.Lang = value;
+            this.lang = value;
         }
-
 
     }
 
+    public static class StarRating {
 
-    public static class Audio {
+        @Element(name = "value", required = false)
+        String value;
 
-        @Element(name = "stereo", required = false)
-        String Stereo;
-
-
-        public String getStereo() {
-            return this.Stereo;
+        public String getValue() {
+            return this.value;
         }
 
-        public void setStereo(String value) {
-            this.Stereo = value;
+        public void setValue(String value) {
+            this.value = value;
         }
-
 
     }
 
-
-    public static class Episode_num {
+    public static class EpisodeNum {
 
         @Attribute(name = "system", required = false)
-        String System;
+        String system;
 
         @Text(required = false)
-        String TextValue;
-
+        String textValue;
 
         public String getSystem() {
-            return this.System;
+            return this.system;
         }
 
         public void setSystem(String value) {
-            this.System = value;
+            this.system = value;
         }
 
         public String getTextValue() {
-            return this.TextValue;
+            return this.textValue;
         }
 
         public void setTextValue(String value) {
-            this.TextValue = value;
+            this.textValue = value;
         }
-
 
     }
 
     public static class Length {
 
-        @Attribute(name = "units", required = false)
-        String Units;
-
         @Text(required = false)
-        String TextValue;
+        String textValue;
 
-
-        public String getUnits() {
-            return this.Units;
-        }
-
-        public void setUnits(String value) {
-            this.Units = value;
-        }
+        @Attribute(name = "units", required = false)
+        String units;
 
         public String getTextValue() {
-            return this.TextValue;
+            return this.textValue;
         }
 
         public void setTextValue(String value) {
-            this.TextValue = value;
+            this.textValue = value;
         }
 
-
-    }
-
-    public static class Star_rating {
-
-        @Element(name = "value", required = false)
-        String Value;
-
-
-        public String getValue() {
-            return this.Value;
+        public String getUnits() {
+            return this.units;
         }
 
-        public void setValue(String value) {
-            this.Value = value;
+        public void setUnits(String value) {
+            this.units = value;
         }
-
 
     }
 
     public static class Credits {
 
-        @ElementList(name = "producer", required = false, entry = "producer", inline = true)
-        List<String> Producer;
-
         @ElementList(name = "actor", required = false, entry = "actor", inline = true)
-        List<String> Actor;
+        List<String> actor;
 
         @ElementList(name = "director", required = false, entry = "director", inline = true)
-        List<String> Director;
+        List<String> director;
 
         @ElementList(name = "presenter", required = false, entry = "presenter", inline = true)
-        List<String> Presenter;
-
-
-        public List<String> getProducer() {
-            return this.Producer;
-        }
-
-        public void setProducer(List<String> value) {
-            this.Producer = value;
-        }
+        List<String> presenter;
 
         public List<String> getActor() {
-            return this.Actor;
+            return this.actor;
         }
 
         public void setActor(List<String> value) {
-            this.Actor = value;
+            this.actor = value;
         }
 
         public List<String> getDirector() {
-            return this.Director;
+            return this.director;
         }
 
         public void setDirector(List<String> value) {
-            this.Director = value;
+            this.director = value;
         }
 
         public List<String> getPresenter() {
-            return this.Presenter;
+            return this.presenter;
         }
 
         public void setPresenter(List<String> value) {
-            this.Presenter = value;
+            this.presenter = value;
         }
-
 
     }
 
-
-    public static class Rating {
-
-        @Attribute(name = "system", required = false)
-        String System;
-
-        @Element(name = "value", required = false)
-        String Value;
-
-
-        public String getSystem() {
-            return this.System;
-        }
-
-        public void setSystem(String value) {
-            this.System = value;
-        }
-
-        public String getValue() {
-            return this.Value;
-        }
-
-        public void setValue(String value) {
-            this.Value = value;
-        }
-
-
-    }
-
-
-    public static class Sub_title {
+    public static class SubTitle {
 
         @Text(required = false)
-        String TextValue;
+        String textValue;
 
         @Attribute(name = "lang", required = false)
-        String Lang;
-
+        String lang;
 
         public String getTextValue() {
-            return this.TextValue;
+            return this.textValue;
         }
 
         public void setTextValue(String value) {
-            this.TextValue = value;
+            this.textValue = value;
         }
 
         public String getLang() {
-            return this.Lang;
+            return this.lang;
         }
 
         public void setLang(String value) {
-            this.Lang = value;
+            this.lang = value;
         }
 
-
     }
-
 
     public static class Channel {
 
         @Attribute(name = "id", required = false)
-        String Id;
-
-        @Element(name = "icon", required = false)
-        Icon Icon;
+        String id;
 
         @ElementList(name = "display-name", required = false, entry = "display-name", inline = true)
-        List<String> Display_name;
-
+        List<String> displayName;
 
         public String getId() {
-            return this.Id;
+            return this.id;
         }
 
         public void setId(String value) {
-            this.Id = value;
+            this.id = value;
         }
 
-        public Icon getIcon() {
-            return this.Icon;
+        public List<String> getDisplayName() {
+            return this.displayName;
         }
 
-        public void setIcon(Icon value) {
-            this.Icon = value;
+        public void setDisplayName(List<String> value) {
+            this.displayName = value;
         }
-
-        public List<String> getDisplay_name() {
-            return this.Display_name;
-        }
-
-        public void setDisplay_name(List<String> value) {
-            this.Display_name = value;
-        }
-
 
     }
 
-
-    public static class Previously_shown {
-
-        @Attribute(name = "start", required = false)
-        Long Start;
-
-
-        public Long getStart() {
-            return this.Start;
-        }
-
-        public void setStart(Long value) {
-            this.Start = value;
-        }
-
-
-    }
 }
