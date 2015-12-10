@@ -20,12 +20,11 @@ package me.jeffsutton;
 import com.github.underscore.Function1;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.simpleframework.xml.Serializer;
-import org.simpleframework.xml.core.Persister;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import util.android.commons.ArrayUtils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -40,11 +39,12 @@ import java.util.*;
 
 /**
  * <p>Class to parse XMl files and generate Java class models annotated for use with SimpleXML.</p>
- *
+ * <p>
  * Created by jeff on 03/12/2015.
  */
 public class SimplePOJO {
 
+    private static final String[] RESERVED_WORDS = {"default", "class", "public", "void"};
     private final String packageName;
     HashMap<String, XClass> classes = new HashMap<>();
     private String rootTageName;
@@ -128,6 +128,80 @@ public class SimplePOJO {
         } catch (Exception err) {
             err.printStackTrace();
         }
+    }
+
+    public static String reservedCheck(String str) {
+        if (ArrayUtils.contains(RESERVED_WORDS, str)) {
+            return "_" + str;
+        }
+        return str;
+    }
+
+    public static String mkClassName(String name) {
+        name = getLastDotInList(name);
+        name = name.replace("-", "_");
+        name = name.replace("#", "");
+        if (name.endsWith("_")) {
+            name = name.substring(0, name.length() - 1);
+        }
+        while (name.contains("_")) {
+            int pos = name.indexOf("_");
+            name = name.substring(0, pos) + name.substring(pos + 1, pos + 2).toUpperCase() + name.substring(pos + 2);
+        }
+        return reservedCheck(name);
+    }
+
+    public static String getLastDotInList(String str) {
+        if (str.indexOf('.') > -1) {
+            String[] sr = str.split("/`./");
+            str = "";
+            for (int i = 0; i < sr.length; i++) {
+                sr[i] = cap(sr[i]);
+                str += sr[i];
+            }
+        } else {
+            str = cap(str);
+        }
+        return str;
+    }
+
+    public static String cap(String str) {
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    public static <String, XField> Collection<XField> values(final Map<String, XField> object) {
+        return object.values();
+    }
+
+    public static <String, E> Map<String, List<Node>> groupBy(final NodeList iterable, final Function1<Node, String> func) {
+        final Map<String, List<Node>> retVal = newLinkedHashMap();
+        for (int i = 0; i < iterable.getLength(); i++) {
+            Node e = iterable.item(i);
+            final String key = func.apply(e);
+            List<Node> val;
+            if (retVal.containsKey(key)) {
+                val = retVal.get(key);
+            } else {
+                val = newArrayList();
+            }
+            val.add(e);
+            retVal.put(key, val);
+        }
+        return retVal;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <K, E> Map<K, E> newLinkedHashMap() {
+        return new LinkedHashMap<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <T> List<T> newArrayList() {
+        return new ArrayList<>();
+    }
+
+    public String getMainClassName() {
+        return mkClassName(rootTageName);
     }
 
     public String generate(BufferedReader xml) throws ParserConfigurationException, SAXException, IOException {
@@ -452,39 +526,7 @@ public class SimplePOJO {
             int pos = name.indexOf("_");
             name = name.substring(0, pos) + name.substring(pos + 1, pos + 2).toUpperCase() + name.substring(pos + 2);
         }
-        return name;
-    }
-
-    public static String mkClassName(String name) {
-        name = getLastDotInList(name);
-        name = name.replace("-", "_");
-        name = name.replace("#", "");
-        if (name.endsWith("_")) {
-            name = name.substring(0, name.length() - 1);
-        }
-        while (name.contains("_")) {
-            int pos = name.indexOf("_");
-            name = name.substring(0, pos) + name.substring(pos + 1, pos + 2).toUpperCase() + name.substring(pos + 2);
-        }
-        return name;
-    }
-
-    public static String getLastDotInList(String str) {
-        if (str.indexOf('.') > -1) {
-            String[] sr = str.split("/`./");
-            str = "";
-            for (int i = 0; i < sr.length; i++) {
-                sr[i] = cap(sr[i]);
-                str += sr[i];
-            }
-        } else {
-            str = cap(str);
-        }
-        return str;
-    }
-
-    public static String cap(String str) {
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
+        return reservedCheck(name);
     }
 
     private String getLiteralDataType(String nodeValue) {
@@ -551,37 +593,6 @@ public class SimplePOJO {
         }
 
         return !isTextOnly;
-    }
-
-    public static <String, XField> Collection<XField> values(final Map<String, XField> object) {
-        return object.values();
-    }
-
-    public static <String, E> Map<String, List<Node>> groupBy(final NodeList iterable, final Function1<Node, String> func) {
-        final Map<String, List<Node>> retVal = newLinkedHashMap();
-        for (int i = 0; i < iterable.getLength(); i++) {
-            Node e = iterable.item(i);
-            final String key = func.apply(e);
-            List<Node> val;
-            if (retVal.containsKey(key)) {
-                val = retVal.get(key);
-            } else {
-                val = newArrayList();
-            }
-            val.add(e);
-            retVal.put(key, val);
-        }
-        return retVal;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected static <K, E> Map<K, E> newLinkedHashMap() {
-        return new LinkedHashMap<>();
-    }
-
-    @SuppressWarnings("unchecked")
-    protected static <T> List<T> newArrayList() {
-        return new ArrayList<>();
     }
 
 
